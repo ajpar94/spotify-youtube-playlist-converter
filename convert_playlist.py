@@ -15,7 +15,7 @@ import google_auth_oauthlib.flow
 import googleapiclient.discovery
 import googleapiclient.errors
 
-from secrets import spotify_token
+from secrets import spotify_token, spotify_user_id
 
 
 class ConvertPlaylist():
@@ -23,6 +23,26 @@ class ConvertPlaylist():
     def __init__(self):
         self.youtube = self.get_youtube_client()
         self.playlist = {'tracks': []}
+
+    # sarch for song in spotify
+    def get_spotify_song(self, track):
+        query = "https://api.spotify.com/v1/search?query=track%3A{}+artist%3A{}&type=track&offset=0&limit=20".format(
+            track['name'],
+            track['artist']
+        )
+        response = requests.get(
+            query,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": "Bearer {}".format(spotify_token)
+            }
+        )
+        response_json = response.json()
+        songs = response_json["tracks"]["items"]
+        # only use the first song
+        uri = songs[0]["uri"]
+
+        return uri
 
     # get spotify playlist
     def get_spotify_playlist(self, spotify_uri):
@@ -49,6 +69,14 @@ class ConvertPlaylist():
                      'artist': main_artist}
             self.playlist['tracks'].append(track)
 
+    # create spotify playlist
+    def create_spotify_playlist(self, title, description=""):
+        pass
+
+    # add song to a playlist
+    def add_song_to_spotify_playlist(self):
+        pass
+
     # Log into Youtube
     def get_youtube_client(self):
         # Disable OAuthlib's HTTPS verification when running locally.
@@ -70,7 +98,7 @@ class ConvertPlaylist():
         return youtube
 
     # search for song in youtube
-    def get_music_video(self, track):
+    def get_youtube_video(self, track):
         query = "{} - {}".format(track['artist'], track['name'])
         # get response
         request = self.youtube.search().list(
@@ -90,8 +118,13 @@ class ConvertPlaylist():
 
         return video_id
 
-    # make youtube playlist
-    def create_yt_playlist(self, title, description=""):
+    # get youtube playlist
+    def get_youtube_playlist(self):
+        # does sth. with self.playlist
+        pass
+
+    # create youtube playlist
+    def create_youtube_playlist(self, title, description=""):
         request = self.youtube.playlists().insert(
             part="snippet",
             body={
@@ -112,8 +145,8 @@ class ConvertPlaylist():
 
         return playlist_id
 
-    # add the video to a playlist
-    def add_video_to_yt_playlist(self, video_id, playlist_id):
+    # add video to a playlist
+    def add_video_to_youtube_playlist(self, video_id, playlist_id):
         request = self.youtube.playlistItems().insert(
             part="snippet",
             body={
@@ -132,12 +165,12 @@ class ConvertPlaylist():
         # get spotify playlist
         self.get_spotify_playlist(spotify_uri)
         # create youtube playlist
-        playlist_id = self.create_yt_playlist(self.playlist['title'], self.playlist['description'])
+        playlist_id = self.create_youtube_playlist(self.playlist['title'], self.playlist['description'])
         for track in self.playlist['tracks']:
             # search video on youtube [artist - song name]
-            video_id = self.get_music_video(track)
+            video_id = self.get_youtube_video(track)
             # add video to youtube playlist
-            self.add_video_to_yt_playlist(video_id, playlist_id)
+            self.add_video_to_youtube_playlist(video_id, playlist_id)
 
 
 if __name__ == '__main__':
