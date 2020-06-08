@@ -1,24 +1,11 @@
-"""
-Spotify to YouTube Playlist Converter
+# Spotify to YouTube Playlist Converter
 
-Example usage:
---------------
-- Get your Spotify OAuth Token > paste into secrets.py
+# Example usage:
+# --------------
+# - Get your Spotify OAuth Token > paste into secrets.py
+# - python convert_playlist.py spotify:playlist:7kkDlPfIUHynUuLvjKNwIZ
+# - Authenticate with Google
 
-- python convert_playlist.py spotify:playlist:7kkDlPfIUHynUuLvjKNwIZ
-
-- Authenticate with Google
-
-
-TODO:
------
-- convert from youtube to spotify
-
-- add exceptions
-
-- add limits
-
-"""
 
 import os
 import requests
@@ -35,7 +22,7 @@ class ConvertPlaylist():
 
     def __init__(self):
         self.youtube = self.get_youtube_client()
-        self.playlist = []
+        self.playlist = {'tracks': []}
 
     # get spotify playlist
     def get_spotify_playlist(self, spotify_uri):
@@ -51,14 +38,16 @@ class ConvertPlaylist():
         )
         response_json = response.json()
 
-        # return title, description, songs
-        self.playlist_title = response_json['name']
-        self.playlist_description = response_json['description']
+        # set title, description, tracks (with name and artist)
+        self.playlist['title'] = response_json['name']
+        self.playlist['description'] = response_json['description']
         items = response_json['tracks']['items']
         for item in items:
             track_name = item['track']['name']
             main_artist = item['track']['artists'][0]['name']
-            self.playlist.append("{} - {}".format(main_artist, track_name))
+            track = {'name': track_name,
+                     'artist': main_artist}
+            self.playlist['tracks'].append(track)
 
     # Log into Youtube
     def get_youtube_client(self):
@@ -81,11 +70,12 @@ class ConvertPlaylist():
         return youtube
 
     # search for song in youtube
-    def get_music_video(self, song):
+    def get_music_video(self, track):
+        query = "{} - {}".format(track['artist'], track['name'])
         # get response
         request = self.youtube.search().list(
             part="snippet",
-            q=song
+            q=query
         )
         response = request.execute()
         # get video id (and title)
@@ -115,8 +105,10 @@ class ConvertPlaylist():
 
         playlist_id = response['id']
         playlist_title = response['snippet']['localized']['title']
+        print('-' * 30)
         print(playlist_title)
         print("https://www.youtube.com/playlist?list={}".format(playlist_id))
+        print('-' * 30)
 
         return playlist_id
 
@@ -140,10 +132,10 @@ class ConvertPlaylist():
         # get spotify playlist
         self.get_spotify_playlist(spotify_uri)
         # create youtube playlist
-        playlist_id = self.create_yt_playlist(self.playlist_title, self.playlist_description)
-        for song in self.playlist:
-            # search video on youtube [interpret - song]
-            video_id = self.get_music_video(song)
+        playlist_id = self.create_yt_playlist(self.playlist['title'], self.playlist['description'])
+        for track in self.playlist['tracks']:
+            # search video on youtube [artist - song name]
+            video_id = self.get_music_video(track)
             # add video to youtube playlist
             self.add_video_to_yt_playlist(video_id, playlist_id)
 
