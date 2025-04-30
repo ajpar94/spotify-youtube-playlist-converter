@@ -15,7 +15,7 @@ import google_auth_oauthlib.flow
 import googleapiclient.discovery
 import googleapiclient.errors
 
-from secrets import spotify_token, spotify_user_id
+from secrets import spotify_token
 
 
 class ConvertPlaylist():

@@ -5,7 +5,7 @@ Inspired by [SpotifyGeneratePlaylist](https://github.com/TheComeUpCode/SpotifyGe
 ## Usage
 ### Spotify to Youtube
 - Generate Spotify OAuth Token and paste into a file called `secrets.py` 
-- Enable Oauth For Youtube and download the `client_secrets.json`
+- Enable Oauth For Youtube and download the `client_secret.json`
 - Get a Spotify Playlist's URI (*Share* > *Copy Spotify URI*)
 - Run `python convert_playlist.py spotify:playlist:<uri>`
 - Click on displayed link to get authorization code
